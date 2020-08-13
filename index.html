@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Bashar Scraper</title>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="./stylesheet.css">
+</head>
+<body>
+
+<h1>Bashar Web Scraper</h1>
+<p class="description">Find questions answered by Bashar, based on keyword(s)</p>
+
+<div class="search-form">
+	<input type="text" id="keyword" placeholder="keyword">
+	<button>Search</button>
+</div>
+
+<ul class="list"></ul>
+
+<script>
+const input = document.querySelector("input");
+const button = document.querySelector("button");
+const ul = document.querySelector("ul");
+document.querySelector("button").addEventListener("click", () => {
+
+	button.disabled = true;
+	let searching = ["Searching.", "Searching..", "Searching..."];
+	let i = 0;
+	let interval = setInterval(() => {
+		button.textContent = searching[i];
+		i === 2 ? i = 0 : i++;
+	}, 200)
+
+	axios.post("/", {
+		keyword: input.value
+	})
+	.then(function(res){
+		ul.innerHTML = "";
+		res.data.forEach(page => {
+			let html = "";
+			html += `<li><a href='${page.link}' target='_blank'>${page.link}</a>`;
+				html += '<ul>';
+			page.snippets.forEach(snippet => {
+				html += `<li>${snippet.trim()}</li>`;
+			})
+			html += '</ul></li>';
+			ul.innerHTML += html;
+		})
+		clearInterval(interval);
+		button.textContent = "Search";
+		button.disabled = false;
+	})
+})
+</script>
+
+</body>
+</html>
