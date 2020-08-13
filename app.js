@@ -41,8 +41,10 @@ async function scrape(keyword) {
 				let linkDom = await new JSDOM(linkText);
 
 				let content = linkDom.window.document.querySelector(".main").textContent;
+				let contentLower = content.toLowerCase();
+				let keywordLower = keyword.toLowerCase();
 				
-				if (content.includes(keyword)) {
+				if (contentLower.includes(keywordLower)) {
 					results.push({link: link, snippets: []});
 
 					let keyIndexes = [];
@@ -50,16 +52,16 @@ async function scrape(keyword) {
 					// Keep pushing the returned keyword index and searching for next as long we dont get -1 (keyword not found)
 					do {
 						keyIndexes.push(keyIndex);
-						keyIndex = content.indexOf(keyword, keyIndexes[keyIndexes.length - 1] + keyword.length);
+						keyIndex = contentLower.indexOf(keywordLower, keyIndexes[keyIndexes.length - 1] + keyword.length);
 					}
 					while (keyIndex > -1)
 					keyIndexes.shift(); // Remove the zero at the beginning. This was only used to start the loop
 
 					keyIndexes.forEach(i => {
 						let val = i;
-						let endIndex = getSnippetEndIndex(content, val); // Get index of the end of question containing keyword
+						let endIndex = getSnippetEndIndex(contentLower, val); // Get index of the end of question containing keyword
 
-						let reverse = content.split("").reverse().join(""); // Reverse the text to get the start index of question
+						let reverse = contentLower.split("").reverse().join(""); // Reverse the text to get the start index of question
 						val = content.length - val - keyword.length;
 						let startIndex = content.length - getSnippetEndIndex(reverse, val); // Subtracting actually gives the start index
 
@@ -80,11 +82,15 @@ function getSnippetEndIndex(content, keyIndex) {
 	let periodIndex = content.indexOf(".", keyIndex);
 	let questionIndex = content.indexOf("?", keyIndex);
 	let dotIndex = content.indexOf("•", keyIndex);
+	let colonIndex = content.indexOf(":", keyIndex);
+	let exclamationIndex = content.indexOf("!", keyIndex);
 
 	// If the character was found, add it to the array
 	if (periodIndex > -1) endIndexes.push(periodIndex);
 	if (questionIndex > -1) endIndexes.push(questionIndex);
 	if (dotIndex > -1) endIndexes.push(dotIndex);
+	if (colonIndex > -1) endIndexes.push(colonIndex);
+	if (exclamationIndex > -1) endIndexes.push(exclamationIndex);
 
 	// Sort the indexes and return the smallest one (first character found)
 	return endIndexes.sort((a, b) => a - b )[0];
