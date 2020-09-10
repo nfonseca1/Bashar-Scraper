@@ -20,7 +20,7 @@ app.post("/", async (req, res) => {
 	res.send(results);
 })
 
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, process.env.IP, () => {
 	console.log("server started");
 })
 
