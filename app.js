@@ -16,7 +16,19 @@ app.get("/", (req, res) => {
 })
 
 app.post("/", async (req, res) => {
-	let results = await scrape(req.body.keyword);
+	let searchTerm = req.body.keyword.toLowerCase();
+	let links = await getEventLinks();
+	
+	let results = [];
+	// Wait for all link fetch promises to resolve
+	await Promise.all(links.map(getLinkContent))
+	.then((contents) => contents.forEach((pageContent, i) => {
+		let indexes = getKeywordIndexes(pageContent, searchTerm);
+		if (indexes.length > 1) {
+			let snippets = indexes.map(index => getKeywordSnippet(pageContent, searchTerm, index));
+			results.push({link: links[i], snippets});
+		}
+	}))
 	res.send(results);
 })
 
@@ -24,66 +36,61 @@ app.listen(process.env.PORT || 3000, process.env.IP, () => {
 	console.log("server started");
 })
 
-async function scrape(keyword) {
+let getEventLinks = () => new Promise(async (resolve) => {
 	const response = await fetch("https://basharstore.com/2015");
 	const text = await response.text();
 	const dom = await new JSDOM(text);
 
-	let links = [];
-	dom.window.document.querySelectorAll(".sf-menu li")[1].querySelectorAll("ul li ul li ul a").forEach(a => {links.push(a.getAttribute("href"))});
-	// Await for this promise before proceeding and returning
-	let results = await function() {
-		return new Promise((resolve, reject) => {
-			let results = [];
-			links.forEach(async (link, i, res) => { // For every link, get html, convert to text and create new DOM with it
-				let linkRes = await fetch(link);
-				let linkText = await linkRes.text();
-				let linkDom = await new JSDOM(linkText);
+	let aTags = dom.window.document.querySelectorAll(".sf-menu li")[1].querySelectorAll("ul li ul li ul a");
+	resolve(Array.from(aTags).map(a => a.getAttribute("href")));
+})
 
-				let content = linkDom.window.document.querySelector(".main").textContent;
-				let contentLower = content.toLowerCase();
-				let keywordLower = keyword.toLowerCase();
-				
-				if (contentLower.includes(keywordLower)) {
-					results.push({link: link, snippets: []});
+let getLinkContent = (link) => new Promise(async (resolve) => {
+	let response = await fetch(link);
+	let text = await response.text();
+	let dom = await new JSDOM(text);
 
-					let keyIndexes = [];
-					let keyIndex = 0;
-					// Keep pushing the returned keyword index and searching for next as long we dont get -1 (keyword not found)
-					do {
-						keyIndexes.push(keyIndex);
-						keyIndex = contentLower.indexOf(keywordLower, keyIndexes[keyIndexes.length - 1] + keyword.length);
-					}
-					while (keyIndex > -1)
-					keyIndexes.shift(); // Remove the zero at the beginning. This was only used to start the loop
+	resolve(dom.window.document.querySelector(".main").textContent);
+})
 
-					keyIndexes.forEach(i => {
-						let val = i;
-						let endIndex = getSnippetEndIndex(contentLower, val); // Get index of the end of question containing keyword
-
-						let reverse = contentLower.split("").reverse().join(""); // Reverse the text to get the start index of question
-						val = content.length - val - keyword.length;
-						let startIndex = content.length - getSnippetEndIndex(reverse, val); // Subtracting actually gives the start index
-
-						let sub = content.substring(startIndex, endIndex + 1); // Add the question snippet to the array
-						results[results.length - 1].snippets.push(sub);
-					})
-				}
-				if (i === res.length - 1) resolve(results); // Resolve the promise to proceed and return the results
-			})
-		})
-	}();
-	return results;
+let getKeywordIndexes = (content, keyword)  => {
+	let lowerCaseContent = content.toLowerCase();
+	let keywordIndexes = [];
+	
+	if (lowerCaseContent.includes(keyword)) {
+		let lastKeywordIndex = 0;
+		// Generate an array of all indexes where the keyword is found in the content, until no more are found
+		do {
+			keywordIndexes.push(lastKeywordIndex);
+			lastKeywordIndex = lowerCaseContent.indexOf(keyword, lastKeywordIndex + keyword.length);
+		}
+		while (lastKeywordIndex > -1)
+		// Remove the zero at the beginning. This was only used to start the loop
+		keywordIndexes.shift(); 
+	}
+	return keywordIndexes;
 }
 
-function getSnippetEndIndex(content, keyIndex) {
+let getKeywordSnippet = (content, keyword, index) => {
+	let lowerCaseContent = content.toLowerCase();
+	let endIndex = getSnippetEndIndex(lowerCaseContent, index);
+	// Reverse the text to get the start index of question (snippet)
+	let reverse = lowerCaseContent.split("").reverse().join(""); 
+	let reversedIndex = content.length - index - keyword.length;
+	// Subtracting from end index gives the start index (Since it's been reversed)
+	let startIndex = content.length - getSnippetEndIndex(reverse, reversedIndex); 
+
+	return content.substring(startIndex, endIndex + 1);
+}
+
+function getSnippetEndIndex(content, keywordIndex) {
 	let endIndexes = [];
 	// Search for indexes of these characters, starting from the keyword position
-	let periodIndex = content.indexOf(".", keyIndex);
-	let questionIndex = content.indexOf("?", keyIndex);
-	let dotIndex = content.indexOf("•", keyIndex);
-	let colonIndex = content.indexOf(":", keyIndex);
-	let exclamationIndex = content.indexOf("!", keyIndex);
+	let periodIndex = content.indexOf(".", keywordIndex);
+	let questionIndex = content.indexOf("?", keywordIndex);
+	let dotIndex = content.indexOf("•", keywordIndex);
+	let colonIndex = content.indexOf(":", keywordIndex);
+	let exclamationIndex = content.indexOf("!", keywordIndex);
 
 	// If the character was found, add it to the array
 	if (periodIndex > -1) endIndexes.push(periodIndex);
