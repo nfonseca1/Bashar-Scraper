@@ -23,7 +23,8 @@ const error = document.querySelector(".error");
 const input = document.querySelector("input");
 const button = document.querySelector("button");
 const ul = document.querySelector("ul");
-let interval;
+let buttonInterval, searchInterval;
+let lastIndex = 0;
 
 document.querySelector("button").addEventListener("click", () => {
 	
@@ -45,24 +46,35 @@ document.querySelector("button").addEventListener("click", () => {
 	axios.post("/", {
 		keyword: input.value
 	})
-	.then(function(res){
+	.then(() => {
 		ul.innerHTML = "";
-		res.data.forEach(page => {
-			let html = "";
-			html += `<li><a href='${page.link}' target='_blank'>${page.link}</a>`;
-				html += '<ul>';
-			page.snippets.forEach(snippet => {
-				html += `<li>${snippet.trim()}</li>`;
-			})
-			html += '</ul></li>';
-			ul.innerHTML += html;
-		})
-		resetButton();
+		searchInterval = setInterval(searchForData, 5000);
 	})
 	.catch(() => {
 		resetButton();
 	})
 })
+
+async function searchForData() {
+	let response = await fetch("/status", {
+		headers: {
+			"Content-Type": "application/json"
+		}
+	})
+	let data = await response.json();
+	for (lastIndex; lastIndex < data.results.length; lastIndex++) {
+		let page = data.results[lastIndex];
+		let html = "";
+		html += `<li><a href='${page.link}' target='_blank'>${page.link}</a>`;
+			html += '<ul>';
+		page.snippets.forEach(snippet => {
+			html += `<li>${snippet.trim()}</li>`;
+		})
+		html += '</ul></li>';
+		ul.innerHTML += html;
+	}
+	if (data.searchFinished) resetButton();
+}
 
 function resetButton() {
 	clearInterval(interval);

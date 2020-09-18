@@ -1,35 +1,56 @@
+// Express Setup
 const express = require("express");
 const app = express();
-
 app.set('views', __dirname);
 app.engine('html', require('ejs').__express);
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(express.static(__dirname));
 
+// Other Dependencies
 const fetch = require("isomorphic-fetch");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
+const session = require("express-session");
+const MemoryStore = require("memorystore")(session);
+app.use(session({
+	secret: "It's a secret!"
+}))
 
 app.get("/", (req, res) => {
 	res.render("index.html");
 })
 
 app.post("/", async (req, res) => {
+	req.session.searchFinished = false;
+	req.session.results = [];
 	let searchTerm = req.body.keyword.toLowerCase();
 	let links = await getEventLinks();
 	
-	let results = [];
+	let results = req.session.results;
 	// Wait for all link fetch promises to resolve
-	await Promise.all(links.map(getLinkContent))
-	.then((contents) => contents.forEach((pageContent, i) => {
-		let indexes = getKeywordIndexes(pageContent, searchTerm);
-		if (indexes.length > 1) {
-			let snippets = indexes.map(index => getKeywordSnippet(pageContent, searchTerm, index));
-			results.push({link: links[i], snippets});
-		}
-	}))
-	res.send(results);
+	Promise.all(links.map(getLinkContent))
+	.then((contents) => {
+		contents.forEach((pageContent, i) => {
+			let indexes = getKeywordIndexes(pageContent, searchTerm);
+			if (indexes.length > 1) {
+				let snippets = indexes.map(index => getKeywordSnippet(pageContent, searchTerm, index));
+				results.push({link: links[i], snippets});
+				req.session.save();
+			}
+		})
+		req.session.searchFinished = true;
+		req.session.save();
+	})
+	res.sendStatus(200);
+})
+
+app.get("/status", (req, res) => {
+	let obj = {
+		results: req.session.results,
+		searchFinished: req.session.searchFinished
+	}
+	res.send(obj);
 })
 
 app.listen(process.env.PORT || 3000, process.env.IP, () => {
