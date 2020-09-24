@@ -69,17 +69,23 @@ async function pollServer(interval = 5000, timeout = 60000) {
 	let endTime = Date.now() + timeout;
 
 	let checkStatus = async (resolve, reject) => {
-		let response = await fetch("/status");
-		let data = await response.json();
-		if (data.searchFinished) {
-			resolve(data.results);
-		}
-		else if (Date.now() < endTime) {
+		fetch("/status")
+		.catch((e) => {
+			console.error(e);
 			setTimeout(checkStatus, interval, resolve, reject);
-		}
-		else {
-			reject(new Error('Status check timed out'));
-		}
+		})
+		.then(async (response) => {
+			let data = await response.json();
+			if (data.searchFinished) {
+				resolve(data.results);
+			}
+			else if (Date.now() < endTime) {
+				setTimeout(checkStatus, interval, resolve, reject);
+			}
+			else {
+				reject(new Error('Status check timed out'));
+			}
+		})
 	}
 
 	await new Promise((res) => setTimeout(() => res(), interval, res));

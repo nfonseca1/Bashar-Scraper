@@ -58,6 +58,7 @@ app.post("/", async (req, res) => {
 app.get("/status", (req, res) => {
 	console.log("RELOADING: " + Date.now());
 	req.session.reload(() => {
+		console.log(req.session.results);
 		let obj = {
 			results: req.session.results,
 			searchFinished: req.session.searchFinished
