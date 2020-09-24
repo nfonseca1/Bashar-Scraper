@@ -23,8 +23,7 @@ const error = document.querySelector(".error");
 const input = document.querySelector("input");
 const button = document.querySelector("button");
 const ul = document.querySelector("ul");
-let buttonInterval, searchInterval;
-let lastIndex = 0;
+let buttonInterval;
 
 document.querySelector("button").addEventListener("click", () => {
 	
@@ -35,35 +34,61 @@ document.querySelector("button").addEventListener("click", () => {
 	else {
 		error.style.visibility = "hidden";
 	}
-	button.disabled = true;
-	let searching = ["Searching.", "Searching..", "Searching..."];
-	let i = 0;
-	interval = setInterval(() => {
-		button.textContent = searching[i];
-		i === 2 ? i = 0 : i++;
-	}, 200)
+	startButton();
 
 	axios.post("/", {
 		keyword: input.value
 	})
 	.then(() => {
 		ul.innerHTML = "";
-		searchInterval = setInterval(searchForData, 5000);
+		pollServer()
+		.then((results) => {
+			manageData(results);
+		})
+		.catch((err) => {
+			console.error(err.name + ": " + err.message);
+		})
+		.finally(() => resetButton())
 	})
 	.catch(() => {
 		resetButton();
 	})
 })
 
-async function searchForData() {
-	let response = await fetch("/status", {
-		headers: {
-			"Content-Type": "application/json"
+function startButton() {
+	button.disabled = true;
+	let searching = ["Searching.", "Searching..", "Searching..."];
+	let i = 0;
+	buttonInterval = setInterval(() => {
+		button.textContent = searching[i];
+		i === 2 ? i = 0 : i++;
+	}, 200)
+}
+
+async function pollServer(interval = 5000, timeout = 60000) {
+	let endTime = Date.now() + timeout;
+
+	let checkStatus = async (resolve, reject) => {
+		let response = await fetch("/status");
+		let data = await response.json();
+		if (data.searchFinished) {
+			resolve(data.results);
 		}
-	})
-	let data = await response.json();
-	for (lastIndex; lastIndex < data.results.length; lastIndex++) {
-		let page = data.results[lastIndex];
+		else if (Date.now() < endTime) {
+			setTimeout(checkStatus, interval, resolve, reject);
+		}
+		else {
+			reject(new Error('Status check timed out'));
+		}
+	}
+
+	await new Promise((res) => setTimeout(() => res(), interval, res));
+	return new Promise(checkStatus);
+}
+
+async function manageData(results) {
+	for (let i = 0; i < results.length; i++) {
+		let page = results[i];
 		let html = "";
 		html += `<li><a href='${page.link}' target='_blank'>${page.link}</a>`;
 			html += '<ul>';
@@ -73,11 +98,10 @@ async function searchForData() {
 		html += '</ul></li>';
 		ul.innerHTML += html;
 	}
-	if (data.searchFinished) resetButton();
 }
 
 function resetButton() {
-	clearInterval(interval);
+	clearInterval(buttonInterval);
 	button.textContent = "Search";
 	button.disabled = false;
 }
