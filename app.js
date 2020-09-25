@@ -27,7 +27,7 @@ const BullQueue = require("bull");
 let scrapeQueue = new BullQueue("Scraping", process.env.REDIS_URL 
 								|| `redis://localhost:6379`);
 scrapeQueue.process(async (job) => {
-	return await processQueue(job.data);
+	return processQueue(job.data);
 });
 
 scrapeQueue.on("completed", (job, result) => {
@@ -58,7 +58,6 @@ app.post("/", async (req, res) => {
 app.get("/status", (req, res) => {
 	console.log("RELOADING: " + Date.now());
 	req.session.reload(() => {
-		console.log(req.session.results);
 		let obj = {
 			results: req.session.results,
 			searchFinished: req.session.searchFinished
@@ -74,10 +73,19 @@ app.listen(process.env.PORT || 3000, () => {
 
 async function processQueue(data) {
 	let links = await getEventLinks();
-	
+	console.log("Job Processing");
 	let results = [];
 	// Wait for all link fetch promises to resolve
-	await Promise.all(links.map(getLinkContent))
+	let linkPromises = links.map(getLinkContent);
+	await Promise.all(linkPromises)
+	.then(async (texts) => {
+		let mains = [];
+		for (text of texts) {
+			mains.push(getMainContent(text));
+			await new Promise(resolve => setTimeout(() => resolve(), 0));
+		}
+		return mains;
+	})
 	.then((contents) => {
 		contents.forEach((pageContent, i) => {
 			let indexes = getKeywordIndexes(pageContent, data.searchTerm);
@@ -90,24 +98,27 @@ async function processQueue(data) {
 	return results;
 }
 
-let getEventLinks = () => new Promise(async (resolve) => {
+let getEventLinks = async () => {
 	const response = await fetch("https://basharstore.com/");
 	const text = await response.text();
 	const dom = await new JSDOM(text);
 
 	let aTags = dom.window.document.querySelectorAll(".sf-menu li")[1].querySelectorAll("ul li ul li ul a");
-	resolve(Array.from(aTags).map(a => a.getAttribute("href")));
-})
+	return Array.from(aTags).map(a => a.getAttribute("href"));
+}
 
-let getLinkContent = (link) => new Promise(async (resolve) => {
+let getLinkContent = async (link) => {
 	let response = await fetch(link);
 	let text = await response.text();
-	let dom = await new JSDOM(text);
+	return text;
+}
 
+let getMainContent = (text) => {
+	let dom = new JSDOM(text);
 	let main = dom.window.document.querySelector(".main")?.textContent;
 	if (main === undefined) console.error("Main content couldn't be retrieved for: " + link);
-	resolve(main);
-})
+	return main;
+}
 
 let getKeywordIndexes = (content, keyword)  => {
 	let lowerCaseContent = content.toLowerCase();

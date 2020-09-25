@@ -65,7 +65,7 @@ function startButton() {
 	}, 200)
 }
 
-async function pollServer(interval = 5000, timeout = 60000) {
+async function pollServer(interval = 5000, timeout = 180000) {
 	let endTime = Date.now() + timeout;
 
 	let checkStatus = async (resolve, reject) => {
