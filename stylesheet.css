@@ -39,6 +39,26 @@ button {
     border-bottom: 1px solid #387dff;
     background-color: #518eff
 }
+button:disabled {
+    color: #505050;
+}
+@media (orientation: portrait) {
+    body {
+        padding: 5vh 2%;
+        font-size: 2.5vw;
+    }
+    input {
+        width: 70vw;
+        font-size: 2.25vw;
+    }
+    button {
+        width: 20vw;
+        font-size: 2.25vw;
+    }
+}
+.progress {
+    float: right;
+}
 .list {
     padding: 0;
     margin-top: 10vh;

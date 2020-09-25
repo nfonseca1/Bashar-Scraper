@@ -27,11 +27,11 @@ const BullQueue = require("bull");
 let scrapeQueue = new BullQueue("Scraping", process.env.REDIS_URL 
 								|| `redis://localhost:6379`);
 scrapeQueue.process(async (job) => {
-	return processQueue(job.data);
+	return processQueue(job);
 });
 
 scrapeQueue.on("completed", (job, result) => {
-	console.log("Job completed!");
+	console.log("Job Completed!");
 	let sessionKey = 'sess:' + job.data.sessionId;
 	redisClient.get(sessionKey, (err, val) => {
 		let jsonSession = JSON.parse(val);
@@ -39,6 +39,15 @@ scrapeQueue.on("completed", (job, result) => {
 		jsonSession.searchFinished = true;
 		redisClient.set(sessionKey, JSON.stringify(jsonSession));
 		console.log("SAVING: " + Date.now());
+	});
+})
+scrapeQueue.on("progress", (job, progress) => {
+	if (progress >= 100) return;
+	let sessionKey = 'sess:' + job.data.sessionId;
+	redisClient.get(sessionKey, (err, val) => {
+		let jsonSession = JSON.parse(val);
+		jsonSession.progress = progress;
+		redisClient.set(sessionKey, JSON.stringify(jsonSession));
 	});
 })
 
@@ -49,6 +58,7 @@ app.get("/", (req, res) => {
 app.post("/", async (req, res) => {
 	req.session.searchFinished = false;
 	req.session.results = null;
+	req.session.progress = 0;
 	let searchTerm = req.body.keyword.toLowerCase();
 
 	await scrapeQueue.add({searchTerm, sessionId: req.sessionID});
@@ -56,11 +66,11 @@ app.post("/", async (req, res) => {
 })
 
 app.get("/status", (req, res) => {
-	console.log("RELOADING: " + Date.now());
 	req.session.reload(() => {
 		let obj = {
 			results: req.session.results,
-			searchFinished: req.session.searchFinished
+			searchFinished: req.session.searchFinished,
+			progress: req.session.progress ?? 0
 		}
 		res.send(obj);
 	})
@@ -71,7 +81,7 @@ app.listen(process.env.PORT || 3000, () => {
 })
 
 
-async function processQueue(data) {
+async function processQueue(job) {
 	let links = await getEventLinks();
 	console.log("Job Processing");
 	let results = [];
@@ -82,15 +92,16 @@ async function processQueue(data) {
 		let mains = [];
 		for (text of texts) {
 			mains.push(getMainContent(text));
+			job.progress((100 / texts.length) * mains.length);
 			await new Promise(resolve => setTimeout(() => resolve(), 0));
 		}
 		return mains;
 	})
 	.then((contents) => {
 		contents.forEach((pageContent, i) => {
-			let indexes = getKeywordIndexes(pageContent, data.searchTerm);
+			let indexes = getKeywordIndexes(pageContent, job.data.searchTerm);
 			if (indexes.length > 1) {
-				let snippets = indexes.map(index => getKeywordSnippet(pageContent, data.searchTerm, index));
+				let snippets = indexes.map(index => getKeywordSnippet(pageContent, job.data.searchTerm, index));
 				results.push({link: links[i], snippets});
 			}
 		})

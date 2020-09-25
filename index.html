@@ -23,7 +23,6 @@ const error = document.querySelector(".error");
 const input = document.querySelector("input");
 const button = document.querySelector("button");
 const ul = document.querySelector("ul");
-let buttonInterval;
 
 document.querySelector("button").addEventListener("click", () => {
 	
@@ -31,9 +30,7 @@ document.querySelector("button").addEventListener("click", () => {
 		error.style.visibility = "visible";
 		return;
 	}
-	else {
-		error.style.visibility = "hidden";
-	}
+	error.style.visibility = "hidden";
 	startButton();
 
 	axios.post("/", {
@@ -57,15 +54,14 @@ document.querySelector("button").addEventListener("click", () => {
 
 function startButton() {
 	button.disabled = true;
-	let searching = ["Searching.", "Searching..", "Searching..."];
-	let i = 0;
-	buttonInterval = setInterval(() => {
-		button.textContent = searching[i];
-		i === 2 ? i = 0 : i++;
-	}, 200)
+	setProgress('0%');
 }
 
-async function pollServer(interval = 5000, timeout = 180000) {
+function setProgress(progress) {
+	button.textContent = progress;
+}
+
+async function pollServer(interval = 1000, timeout = 180000) {
 	let endTime = Date.now() + timeout;
 
 	let checkStatus = async (resolve, reject) => {
@@ -77,9 +73,11 @@ async function pollServer(interval = 5000, timeout = 180000) {
 		.then(async (response) => {
 			let data = await response.json();
 			if (data.searchFinished) {
+				setProgress("100%");
 				resolve(data.results);
 			}
 			else if (Date.now() < endTime) {
+				setProgress(Math.round(data.progress) + "%");
 				setTimeout(checkStatus, interval, resolve, reject);
 			}
 			else {
@@ -107,7 +105,6 @@ async function manageData(results) {
 }
 
 function resetButton() {
-	clearInterval(buttonInterval);
 	button.textContent = "Search";
 	button.disabled = false;
 }
