@@ -91,7 +91,8 @@ async function processQueue(job) {
 	.then(async (texts) => {
 		let mains = [];
 		for (text of texts) {
-			mains.push(getMainContent(text));
+			let mainContent = getMainContent(text);
+			if (mainContent) mains.push(mainContent);
 			job.progress((100 / texts.length) * mains.length);
 			await new Promise(resolve => setTimeout(() => resolve(), 0));
 		}
@@ -100,7 +101,7 @@ async function processQueue(job) {
 	.then((contents) => {
 		contents.forEach((pageContent, i) => {
 			let indexes = getKeywordIndexes(pageContent, job.data.searchTerm);
-			if (indexes.length > 1) {
+			if (indexes.length >= 1) {
 				let snippets = indexes.map(index => getKeywordSnippet(pageContent, job.data.searchTerm, index));
 				results.push({link: links[i], snippets});
 			}
@@ -127,7 +128,6 @@ let getLinkContent = async (link) => {
 let getMainContent = (text) => {
 	let dom = new JSDOM(text);
 	let main = dom.window.document.querySelector(".main")?.textContent;
-	if (main === undefined) console.error("Main content couldn't be retrieved for: " + link);
 	return main;
 }
 
