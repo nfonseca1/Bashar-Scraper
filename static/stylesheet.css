@@ -1,0 +1,68 @@
+body {
+    padding: 5vh 10% 5vh 10%;
+    background-color: #202020;
+    color: #f0f0f0;
+    font-family: Arial, Helvetica, sans-serif
+}
+.description {
+    margin-top: 0;
+    margin-bottom: 5vh;
+}
+h1 {
+    margin-bottom: 1vh;
+}
+a {
+    color: #518eff
+}
+.error {
+    visibility: hidden;
+    color: red;
+    font-size: 1.5vh;
+    margin-bottom: 0;
+}
+input {
+    border-radius: 5px;
+    width: 15vw;
+    height: 2.7vh;
+    padding-left: 1%;
+    border: none;
+    border-bottom: 1px solid #404040;
+    font-size: 2.3;
+}
+button {
+    height: 3vh;
+    width: 6vw;
+    border-radius: 5px;
+    border-top: 1px solid #659bff;
+    border-left: 1px solid #659bff;
+    border-right: 1px solid #387dff;
+    border-bottom: 1px solid #387dff;
+    background-color: #518eff
+}
+button:disabled {
+    color: #505050;
+}
+@media (orientation: portrait) {
+    body {
+        padding: 5vh 2%;
+        font-size: 2.5vw;
+    }
+    input {
+        width: 70vw;
+        font-size: 2.25vw;
+    }
+    button {
+        width: 20vw;
+        font-size: 2.25vw;
+    }
+}
+.progress {
+    float: right;
+}
+.list {
+    padding: 0;
+    margin-top: 10vh;
+}
+li {
+    margin-top: 10px;
+}

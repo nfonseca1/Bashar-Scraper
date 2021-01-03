@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Bashar Scraper</title>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="./stylesheet.css">
+</head>
+<body>
+
+<h1>Bashar Web Scraper</h1>
+<p class="description">Find questions answered by Bashar, based on keyword(s)</p>
+
+<p class="error">Type in a keyword</p>
+<div class="search-form">
+	<input type="text" id="keyword" placeholder="keyword">
+	<button>Search</button>
+</div>
+
+<div class="list"></div>
+
+<script>
+const error = document.querySelector(".error");
+const input = document.querySelector("input");
+const button = document.querySelector("button");
+const list = document.querySelector(".list");
+
+document.querySelector("button").addEventListener("click", async () => {
+	
+	if (input.value == "") {
+		error.style.visibility = "visible";
+		return;
+	}
+	error.style.visibility = "hidden";
+
+	let response = await fetch("/search", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({keyword: input.value})
+	})
+	let data = await response.json();
+
+	for (let snippet of data) {
+		let div = document.createElement("div");
+		div.innerHTML += `<h2>${snippet.eventName}</h2>`;
+		div.innerHTML += `<span>${snippet.time}</span>`;
+		div.innerHTML += `<p>${snippet.snippet}</p>`;
+		list.appendChild(div);
+	}
+})
+
+
+</script>
+
+</body>
+</html>
