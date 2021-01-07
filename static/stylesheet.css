@@ -75,3 +75,20 @@ li {
 .Snippet {
     margin-bottom: 5vh;
 }
+
+.event-head {
+    display: flex;
+    justify-content: space-between;
+}
+
+.event-head {
+    display: inline-block;
+}
+
+.Audio {
+    display: inline-block;
+}
+
+.highlighted {
+    background-color: #c9ab00;
+}

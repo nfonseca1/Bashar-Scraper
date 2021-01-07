@@ -8,7 +8,12 @@ class Snippet extends React.Component {
                 jsx.push(<h4>{words[i].speaker}</h4>);
                 lastSpeaker = words[i].speaker;
             }
-            jsx.push(<Word word={words[i].word} time={words[i].time}></Word>)
+            jsx.push(<Word 
+                word={words[i].word} 
+                time={words[i].time}
+                isHighlighted={this.props.audioTime >= words[i].time ? true : false}
+                audioClip={this.props.audioClip}>
+                </Word>)
         }
 
         return (
