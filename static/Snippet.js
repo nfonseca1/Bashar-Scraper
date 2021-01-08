@@ -6,7 +6,7 @@ class Snippet extends React.Component {
         let lastSpeaker = words[0].speaker;
         for (let i = 0; i < words.length; i++) {
             if (words[i].speaker !== lastSpeaker) {
-                jsx.push(<h4>{words[i].speaker}</h4>);
+                if (this.props.showSpeakers) jsx.push(<h4>{words[i].speaker}</h4>);
                 lastSpeaker = words[i].speaker;
             }
 
@@ -30,7 +30,8 @@ class Snippet extends React.Component {
                         time={words[i + w].time}
                         isHighlighted={this.props.audioTime >= words[i + w].time ? true : false}
                         isKeyword={true}
-                        audioClip={this.props.audioClip}>
+                        audioClip={this.props.audioClip}
+                        highlight={this.props.highlight}>
                         </Word>)
                 }
                 i += key.length;
@@ -43,15 +44,18 @@ class Snippet extends React.Component {
                     time={words[i].time}
                     isHighlighted={this.props.audioTime >= words[i].time ? true : false}
                     isKeyword={false}
-                    audioClip={this.props.audioClip}>
+                    audioClip={this.props.audioClip}
+                    highlight={this.props.highlight}>
                     </Word>)
             }
             else i -= 1;
         }
 
+        let speaker = this.props.showSpeakers ? <h3>{words[0].speaker} - {words[0].time}</h3> : '';
+
         return (
             <div className="Snippet">
-                <h3>{words[0].speaker} - {words[0].time}</h3>
+                {speaker}
                 {jsx}
             </div>
         )

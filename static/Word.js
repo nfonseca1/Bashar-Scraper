@@ -7,7 +7,9 @@ class Word extends React.Component {
         this.props.audioClip.currentTime = this.props.time;
     }
     render() {
-        let className = `Word ${this.props.isHighlighted ? 'highlighted' : ''} ${this.props.isKeyword ? 'keyword' : ''}`;
+        let highlight = this.props.isHighlighted && this.props.highlight ? 'highlighted' : '';
+        let keyword = this.props.isKeyword ? 'keyword' : '';
+        let className = `Word ${highlight} ${keyword}`;
         return <span onClick={this.handleClick} className={className}>{this.props.word} </span>
     }
 }

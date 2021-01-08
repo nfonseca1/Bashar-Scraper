@@ -74,11 +74,17 @@ li {
 
 .Snippet {
     margin-bottom: 5vh;
+    padding-top: 2vh;
+    border-top: 1px solid #303030;
 }
 
 .event-head {
     display: flex;
     justify-content: space-between;
+}
+
+.event-tools {
+    margin-bottom: 1vh;
 }
 
 .event-title {
@@ -96,4 +102,22 @@ li {
 
 .keyword {
     background-color:  rgba(255, 153, 0, 0.5);
+}
+
+.speaker-toggle-btn {
+    color: #f0f0f0;
+    background-color: #009ccc;
+    border-top: 1px solid #17a6d1;
+    border-bottom: 1px solid #0082aa;
+    border-left: 1px solid #17a6d1;
+    border-right: 1px solid#0082aa;
+}
+
+.highlight-toggle-btn {
+    color: #f0f0f0;
+    background-color: #c28c16;
+    border-top: 1px solid #ca9523;
+    border-bottom: 1px solid #a8760b;
+    border-left: 1px solid #ca9523;
+    border-right: 1px solid #a8760b;
 }
