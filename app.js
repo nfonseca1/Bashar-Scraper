@@ -1,3 +1,4 @@
+const fs = require("fs");
 // Express Setup
 const express = require("express");
 const app = express();
@@ -5,7 +6,7 @@ app.set('views', __dirname);
 app.engine('html', require('ejs').__express);
 app.use(express.json());
 app.use(express.urlencoded());
-app.use(express.static(__dirname));
+app.use(express.static(__dirname + "/static/"));
 
 // Other Dependencies
 const fetch = require("isomorphic-fetch");
@@ -23,6 +24,7 @@ app.use(session({
 	resave: false
 }))
 
+// BULL SETUP
 const BullQueue = require("bull");
 let scrapeQueue = new BullQueue("Scraping", process.env.REDIS_URL 
 								|| `redis://localhost:6379`);
@@ -49,6 +51,36 @@ scrapeQueue.on("progress", (job, progress) => {
 		jsonSession.progress = progress;
 		redisClient.set(sessionKey, JSON.stringify(jsonSession));
 	});
+})
+
+// Data
+let {checkWordMatch, getSnippet} = require("./lib/searchHelpers.js");
+let eventDataRaw = fs.readFileSync("./newEventData.json", {encoding: "utf-8"});
+let eventData = JSON.parse(eventDataRaw);
+
+app.get("/search", (req, res) => {
+    res.sendFile(__dirname + "/search.html");
+})
+
+app.post("/search", (req, res) => {
+    let keyPhrases = req.body.keywords;
+
+    let keySnippets = [];
+    
+    for (let evt of eventData) {
+        console.log(evt.eventName);
+        keySnippets.push({eventName: evt.eventName, content: []});
+        let content = evt.content;
+        for (let i = 0; i < content.length; i++) {
+            let endIdx = checkWordMatch(content, i, keyPhrases);
+            if (endIdx === -1) continue;
+            let bounds = getSnippet(content, keyPhrases, i, endIdx);
+            keySnippets[keySnippets.length-1].content.push(content.slice(bounds.startIdx, bounds.endIdx + 1));
+            i = bounds.endIdx + 1;
+        }
+    }
+
+    res.send({keySnippets, keyPhrases});
 })
 
 app.get("/", (req, res) => {

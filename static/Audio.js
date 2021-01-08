@@ -15,7 +15,8 @@ class Audio extends React.Component {
         this.props.setAudioTime(this.myRef.current.currentTime)
     }
     render() {
-        let src = `audio/${this.props.name}.mp3`;
+        let name = this.props.name.toLowerCase().split(" ").join("+");
+        let src = `https://nf-bashar-audio.s3.amazonaws.com/${name}.mp3`;
         return (
             <audio className="Audio" controls src={src} onTimeUpdate={this.handleTimeUpdate} ref={this.myRef}></audio>
         )

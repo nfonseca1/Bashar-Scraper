@@ -39,6 +39,16 @@ button {
     border-bottom: 1px solid #387dff;
     background-color: #518eff
 }
+.switch-search-btn {
+    margin-top: 1vh;
+    width: auto;
+    color: #f0f0f0;
+    background-color: #c28c16;
+    border-top: 1px solid #ca9523;
+    border-bottom: 1px solid #a8760b;
+    border-left: 1px solid #ca9523;
+    border-right: 1px solid #a8760b;
+}
 button:disabled {
     color: #505050;
 }
