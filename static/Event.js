@@ -14,7 +14,7 @@ class Event extends React.Component {
     render() {
         let jsx = [];
         for (let words of this.props.content) {
-            jsx.push(<Snippet words={words} audioTime={this.state.audioTime} audioClip={this.state.audioClip}></Snippet>)
+            jsx.push(<Snippet words={words} keys={this.props.keys} audioTime={this.state.audioTime} audioClip={this.state.audioClip}></Snippet>)
         }
 
         return (

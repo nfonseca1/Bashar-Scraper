@@ -17,7 +17,7 @@ class Audio extends React.Component {
     render() {
         let src = `audio/${this.props.name}.mp3`;
         return (
-            <audio controls src={src} onTimeUpdate={this.handleTimeUpdate} ref={this.myRef}></audio>
+            <audio className="Audio" controls src={src} onTimeUpdate={this.handleTimeUpdate} ref={this.myRef}></audio>
         )
     }
 }

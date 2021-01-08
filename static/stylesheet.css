@@ -81,14 +81,19 @@ li {
     justify-content: space-between;
 }
 
-.event-head {
+.event-title {
     display: inline-block;
 }
 
 .Audio {
     display: inline-block;
+    width: 50%;
 }
 
 .highlighted {
-    background-color: #c9ab00;
+    background-color: rgba(253, 215, 0, 0.5);
+}
+
+.keyword {
+    background-color:  rgba(255, 153, 0, 0.5);
 }

@@ -30,7 +30,7 @@ app.post("/search", (req, res) => {
         }
     }
 
-    res.send(keySnippets);
+    res.send({keySnippets, keyPhrases});
 })
 
 function checkWordMatch(content, i, keyPhrases, checkBackwards = false) {
