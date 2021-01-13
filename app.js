@@ -58,7 +58,7 @@ let {checkWordMatch, getSnippet} = require("./lib/searchHelpers.js");
 let eventDataRaw = fs.readFileSync("./newEventData.json", {encoding: "utf-8"});
 let eventData = JSON.parse(eventDataRaw);
 
-app.get("/search", (req, res) => {
+app.get("/", (req, res) => {
     res.sendFile(__dirname + "/search.html");
 })
 
@@ -83,7 +83,7 @@ app.post("/search", (req, res) => {
     res.send({keySnippets, keyPhrases});
 })
 
-app.get("/", (req, res) => {
+app.get("/questions", (req, res) => {
 	res.render("index.html");
 })
 
